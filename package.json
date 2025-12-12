@@ -1,0 +1,33 @@
+{
+  "name": "jtix",
+  "version": "1.0.0",
+  "description": "A CLI tool for managing Jira tickets",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "jtix": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["jira", "cli", "tickets", "project-management"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "conf": "^15.0.2",
+    "inquirer": "^13.0.2",
+    "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^25.0.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
