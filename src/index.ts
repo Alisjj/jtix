@@ -14,6 +14,7 @@ import { transitionCommand } from "./commands/transition.js";
 import { openCommand } from "./commands/open.js";
 import { projectsCommand } from "./commands/projects.js";
 import { statusesCommand } from "./commands/statuses.js";
+import { statusCommand } from "./commands/status.js";
 
 const program = new Command();
 
@@ -33,5 +34,6 @@ transitionCommand(program);
 openCommand(program);
 projectsCommand(program);
 statusesCommand(program);
+statusCommand(program);
 
 program.parse();

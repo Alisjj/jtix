@@ -9,6 +9,9 @@ export interface JiraIssue {
     description: string | null;
     status: {
       name: string;
+      statusCategory?: {
+        name: string;
+      };
     };
     priority: {
       name: string;

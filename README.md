@@ -16,6 +16,7 @@ A powerful CLI tool for managing Jira tickets from your terminal.
 - Transition issues between statuses
 - Open issues in browser
 - List projects and statuses
+- Quick status check for any issue
 - Beautiful terminal formatting with colors and Unicode
 
 ## Installation
@@ -293,6 +294,31 @@ jtix o PROJ-123
 
 ### Projects & Statuses
 
+#### `jtix status <issue>` (alias: `s`)
+
+Quickly check the status of an issue.
+
+```bash
+jtix status PROJ-123
+jtix s PROJ-123
+```
+
+**Output:**
+
+```
+  PROJ-123 • Issue summary here
+
+  Status:   In Progress
+  Category: In Progress
+```
+
+Status colors:
+
+- **Green** - Done/Closed/Resolved
+- **Yellow** - In Progress/Dev/Review
+- **Red** - Blocked/On Hold
+- **Blue** - Other statuses
+
 #### `jtix projects` (alias: `pr`)
 
 List all available Jira projects.
@@ -326,6 +352,7 @@ jtix statuses --project PROJ
 | `config clear`       |       | Clear configuration        |
 | `list`               | `ls`  | List issues                |
 | `view <issue>`       | `v`   | View issue details         |
+| `status <issue>`     | `s`   | Quick status check         |
 | `create`             | `c`   | Create new issue           |
 | `comment <issue>`    | `cm`  | Add a comment              |
 | `comments <issue>`   | `cms` | View comments              |
@@ -344,7 +371,10 @@ jtix statuses --project PROJ
 # Start your day - see what's assigned to you
 jtix list
 
-# Check a specific ticket
+# Quick status check on a ticket
+jtix s TR-123
+
+# Check a specific ticket in detail
 jtix view TR-123
 
 # Start working on it - move to "In Dev"
@@ -480,7 +510,8 @@ jtix/
 │   │   ├── transition.ts
 │   │   ├── open.ts
 │   │   ├── projects.ts
-│   │   └── statuses.ts
+│   │   ├── statuses.ts
+│   │   └── status.ts
 │   ├── services/
 │   │   └── jira.ts      # Jira API client
 │   ├── utils/
