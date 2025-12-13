@@ -1,21 +1,44 @@
 {
   "name": "jtix",
   "version": "1.0.0",
-  "description": "A CLI tool for managing Jira tickets",
+  "description": "A CLI tool for managing Jira tickets from the terminal",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
     "jtix": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["jira", "cli", "tickets", "project-management"],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "jira",
+    "cli",
+    "tickets",
+    "project-management",
+    "atlassian",
+    "terminal",
+    "productivity"
+  ],
+  "author": "Alisjj",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alisjj/jtix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Alisjj/jtix/issues"
+  },
+  "homepage": "https://github.com/Alisjj/jtix#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "chalk": "^5.6.2",
