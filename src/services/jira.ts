@@ -238,6 +238,14 @@ class JiraService {
     return response.data.transitions;
   }
 
+  async getIssueChangelog(
+    issueKey: string,
+  ): Promise<{ id: string; author: { displayName: string }; created: string; items: { field: string; fromString: string | null; toString: string | null }[] }[]> {
+    const client = this.getClient();
+    const response = await client.get(`/issue/${issueKey}/changelog`);
+    return response.data.values || [];
+  }
+
   async getIssueTypes(
     projectKey: string,
   ): Promise<{ id: string; name: string; subtask: boolean }[]> {
@@ -267,6 +275,247 @@ class JiraService {
 
   getBrowseUrl(issueKey: string): string {
     return `${this.getBaseUrl()}/browse/${issueKey}`;
+  }
+
+  async assignIssue(issueKey: string, accountId: string | null): Promise<void> {
+    const client = this.getClient();
+    await client.put(`/issue/${issueKey}/assignee`, {
+      accountId,
+    });
+  }
+
+  async searchUsers(query: string): Promise<{ accountId: string; displayName: string; emailAddress?: string }[]> {
+    const client = this.getClient();
+    const response = await client.get("/user/search", {
+      params: { query, maxResults: 20 },
+    });
+    return response.data;
+  }
+
+  async getAssignableUsers(issueKey: string): Promise<{ accountId: string; displayName: string; emailAddress?: string }[]> {
+    const client = this.getClient();
+    const response = await client.get("/user/assignable/search", {
+      params: { issueKey, maxResults: 50 },
+    });
+    return response.data;
+  }
+
+  async updateIssue(issueKey: string, fields: Record<string, unknown>): Promise<void> {
+    const client = this.getClient();
+    await client.put(`/issue/${issueKey}`, { fields });
+  }
+
+  async getFields(): Promise<{ id: string; name: string; custom: boolean }[]> {
+    const client = this.getClient();
+    const response = await client.get("/field");
+    return response.data;
+  }
+
+  async getStoryPointsFieldId(): Promise<string | null> {
+    const fields = await this.getFields();
+    const storyPointsField = fields.find(
+      (f) =>
+        f.name.toLowerCase().includes("story point") ||
+        f.name.toLowerCase() === "story points" ||
+        f.name.toLowerCase() === "story point estimate"
+    );
+    return storyPointsField?.id || null;
+  }
+
+  async setStoryPoints(issueKey: string, points: number): Promise<void> {
+    const fieldId = await this.getStoryPointsFieldId();
+    if (!fieldId) {
+      throw new Error("Story points field not found in this Jira instance");
+    }
+    await this.updateIssue(issueKey, { [fieldId]: points });
+  }
+
+  async getIssueStoryPoints(issueKey: string): Promise<{ fieldId: string; value: number | null } | null> {
+    const fieldId = await this.getStoryPointsFieldId();
+    if (!fieldId) {
+      return null;
+    }
+    const client = this.getClient();
+    const response = await client.get(`/issue/${issueKey}`, {
+      params: { fields: fieldId },
+    });
+    return {
+      fieldId,
+      value: response.data.fields[fieldId] ?? null,
+    };
+  }
+
+  async deleteIssue(issueKey: string, deleteSubtasks = false): Promise<void> {
+    const client = this.getClient();
+    await client.delete(`/issue/${issueKey}`, {
+      params: { deleteSubtasks },
+    });
+  }
+
+  async watchIssue(issueKey: string): Promise<void> {
+    const client = this.getClient();
+    const config = getConfig();
+    await client.post(`/issue/${issueKey}/watchers`, JSON.stringify(config.email));
+  }
+
+  async unwatchIssue(issueKey: string): Promise<void> {
+    const client = this.getClient();
+    // First get current user's account ID
+    const currentUser = await this.getCurrentUser();
+    await client.delete(`/issue/${issueKey}/watchers`, {
+      params: { accountId: currentUser.accountId },
+    });
+  }
+
+  async getWatchers(issueKey: string): Promise<{ watchCount: number; watchers: { displayName: string }[] }> {
+    const client = this.getClient();
+    const response = await client.get(`/issue/${issueKey}/watchers`);
+    return response.data;
+  }
+
+  async getCurrentUser(): Promise<{ accountId: string; displayName: string; emailAddress: string }> {
+    const client = this.getClient();
+    const response = await client.get("/myself");
+    return response.data;
+  }
+
+  async linkIssues(inwardIssue: string, outwardIssue: string, linkType: string): Promise<void> {
+    const client = this.getClient();
+    await client.post("/issueLink", {
+      type: { name: linkType },
+      inwardIssue: { key: inwardIssue },
+      outwardIssue: { key: outwardIssue },
+    });
+  }
+
+  async getIssueLinkTypes(): Promise<{ id: string; name: string; inward: string; outward: string }[]> {
+    const client = this.getClient();
+    const response = await client.get("/issueLinkType");
+    return response.data.issueLinkTypes;
+  }
+
+  async getBoards(): Promise<{ id: number; name: string; type: string }[]> {
+    const client = this.getClient();
+    const config = getConfig();
+    const agileClient = axios.create({
+      baseURL: `${config.baseUrl}/rest/agile/1.0`,
+      headers: client.defaults.headers as Record<string, string>,
+    });
+    const response = await agileClient.get("/board", {
+      params: { maxResults: 50 },
+    });
+    return response.data.values;
+  }
+
+  async getSprints(boardId: number, state?: string): Promise<{ id: number; name: string; state: string; startDate?: string; endDate?: string }[]> {
+    const client = this.getClient();
+    const config = getConfig();
+    const agileClient = axios.create({
+      baseURL: `${config.baseUrl}/rest/agile/1.0`,
+      headers: client.defaults.headers as Record<string, string>,
+    });
+    const response = await agileClient.get(`/board/${boardId}/sprint`, {
+      params: { state: state || "active,future", maxResults: 50 },
+    });
+    return response.data.values;
+  }
+
+  async getSprintIssues(sprintId: number): Promise<JiraIssue[]> {
+    const client = this.getClient();
+    const config = getConfig();
+    const agileClient = axios.create({
+      baseURL: `${config.baseUrl}/rest/agile/1.0`,
+      headers: client.defaults.headers as Record<string, string>,
+    });
+    const response = await agileClient.get(`/sprint/${sprintId}/issue`, {
+      params: {
+        maxResults: 100,
+        fields: "summary,status,priority,assignee,issuetype,project,created,updated",
+      },
+    });
+    return response.data.issues;
+  }
+
+  async addWorklog(issueKey: string, timeSpent: string, comment?: string, started?: string): Promise<void> {
+    const client = this.getClient();
+    // Jira expects format: "2023-12-17T10:00:00.000+0000"
+    const now = new Date();
+    const formattedDate = started || now.toISOString().replace('Z', '+0000');
+    
+    const payload: Record<string, unknown> = {
+      timeSpent,
+      started: formattedDate,
+    };
+    
+    if (comment) {
+      payload.comment = {
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: comment }],
+          },
+        ],
+      };
+    }
+    
+    await client.post(`/issue/${issueKey}/worklog`, payload);
+  }
+
+  async getWorklogs(issueKey: string): Promise<{ id: string; author: { displayName: string }; timeSpent: string; started: string; comment?: { content?: Array<{ content?: Array<{ text?: string }> }> } }[]> {
+    const client = this.getClient();
+    const response = await client.get(`/issue/${issueKey}/worklog`);
+    return response.data.worklogs;
+  }
+
+  async getPriorities(): Promise<{ id: string; name: string }[]> {
+    const client = this.getClient();
+    const response = await client.get("/priority");
+    return response.data;
+  }
+
+  async addLabels(issueKey: string, labels: string[]): Promise<void> {
+    const client = this.getClient();
+    await client.put(`/issue/${issueKey}`, {
+      update: {
+        labels: labels.map((label) => ({ add: label })),
+      },
+    });
+  }
+
+  async removeLabels(issueKey: string, labels: string[]): Promise<void> {
+    const client = this.getClient();
+    await client.put(`/issue/${issueKey}`, {
+      update: {
+        labels: labels.map((label) => ({ remove: label })),
+      },
+    });
+  }
+
+  async getAttachments(issueKey: string): Promise<{ id: string; filename: string; size: number; created: string; author: { displayName: string }; content: string }[]> {
+    const client = this.getClient();
+    const response = await client.get<JiraIssue>(`/issue/${issueKey}`, {
+      params: { fields: "attachment" },
+    });
+    return (response.data.fields as unknown as { attachment: { id: string; filename: string; size: number; created: string; author: { displayName: string }; content: string }[] }).attachment || [];
+  }
+
+  async addAttachment(issueKey: string, filePath: string): Promise<void> {
+    const client = this.getClient();
+    const fs = await import("fs");
+    const path = await import("path");
+    const FormData = (await import("form-data")).default;
+
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath), path.basename(filePath));
+
+    await client.post(`/issue/${issueKey}/attachments`, form, {
+      headers: {
+        ...form.getHeaders(),
+        "X-Atlassian-Token": "no-check",
+      },
+    });
   }
 
   async getStatuses(

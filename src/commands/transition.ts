@@ -13,6 +13,7 @@ export function transitionCommand(program: Command): void {
     .option("-s, --status <status>", "Target status name")
     .option("-p, --pick", "Pick from available transitions")
     .option("-l, --list", "List available transitions without changing")
+    .option("-h, --history", "Show transition history")
     .action(async (issueKey: string, options) => {
       if (!isConfigured()) {
         console.log(
@@ -24,6 +25,42 @@ export function transitionCommand(program: Command): void {
       const key = issueKey.toUpperCase();
 
       try {
+        // Show transition history
+        if (options.history) {
+          const spinner = ora(`Fetching transition history for ${key}...`).start();
+          const changelog = await jiraService.getIssueChangelog(key);
+          spinner.stop();
+
+          // Filter for status changes only
+          const statusChanges = changelog
+            .filter((entry) => entry.items.some((item) => item.field === "status"))
+            .map((entry) => ({
+              date: entry.created,
+              author: entry.author.displayName,
+              change: entry.items.find((item) => item.field === "status"),
+            }));
+
+          if (statusChanges.length === 0) {
+            console.log(chalk.yellow(`No transition history for ${key}.`));
+            return;
+          }
+
+          console.log(chalk.bold(`\n  Transition History for ${key}:\n`));
+          for (const change of statusChanges) {
+            const date = new Date(change.date).toLocaleString();
+            const from = change.change?.fromString || "None";
+            const to = change.change?.toString || "Unknown";
+            console.log(
+              `    ${chalk.dim(date)} - ${chalk.cyan(change.author)}`,
+            );
+            console.log(
+              `        ${chalk.red(from)} ${chalk.dim("→")} ${chalk.green(to)}`,
+            );
+          }
+          console.log();
+          return;
+        }
+
         const spinner = ora(
           `Fetching available transitions for ${key}...`,
         ).start();
@@ -79,13 +116,26 @@ export function transitionCommand(program: Command): void {
           ]);
           selectedTransition = selected;
         } else {
-          // Default: pick the first available transition (next stage)
-          selectedTransition = transitions[0];
-          console.log(
-            chalk.dim(
-              `Available: ${transitions.map((t) => t.name).join(", ")}`,
-            ),
-          );
+          // Show available transitions before prompting
+          console.log(chalk.bold(`\n  Available transitions for ${key}:\n`));
+          for (const t of transitions) {
+            console.log(`    ${chalk.cyan("•")} ${t.name}`);
+          }
+          console.log();
+
+          // Prompt user to select
+          const { selected } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "selected",
+              message: `Select new status for ${key}:`,
+              choices: transitions.map((t) => ({
+                name: t.name,
+                value: t,
+              })),
+            },
+          ]);
+          selectedTransition = selected;
         }
 
         const transitionSpinner = ora(

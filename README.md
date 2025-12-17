@@ -10,13 +10,21 @@ A powerful CLI tool for managing Jira tickets from your terminal.
 
 - List and filter Jira issues
 - View detailed issue information with formatted descriptions
-- Create new issues
+- Create, edit, and delete issues
 - Add comments to issues
 - View comment threads
-- Transition issues between statuses
+- Transition issues between statuses with history tracking
+- Assign/unassign issues
+- Set story points/estimates
+- Manage labels and priority
+- Watch/unwatch issues
+- Link issues together
+- Log work time
+- Manage attachments
+- Search with JQL and saved queries
+- View sprints and boards
 - Open issues in browser
 - List projects and statuses
-- Quick status check for any issue
 - Beautiful terminal formatting with colors and Unicode
 
 ## Installation
@@ -354,11 +362,24 @@ jtix statuses --project PROJ
 | `view <issue>`       | `v`   | View issue details         |
 | `status <issue>`     | `s`   | Quick status check         |
 | `create`             | `c`   | Create new issue           |
+| `edit <issue>`       |       | Edit issue summary/description |
+| `delete <issue>`     | `rm`  | Delete an issue            |
 | `comment <issue>`    | `cm`  | Add a comment              |
 | `comments <issue>`   | `cms` | View comments              |
 | `transition <issue>` | `tr`  | Change issue status        |
+| `assign <issue>`     |       | Assign/unassign issue      |
+| `estimate <issue>`   | `est` | Set story points           |
+| `priority <issue>`   | `prio`| Change priority            |
+| `labels <issue>`     |       | Add/remove labels          |
+| `watch <issue>`      |       | Watch/unwatch issue        |
+| `link <issue> <target>` |    | Link two issues            |
+| `worklog <issue>`    | `log` | Log time on issue          |
+| `attachments <issue>`| `attach` | Manage attachments      |
+| `search [jql]`       | `jql` | Search with JQL            |
 | `open <issue>`       | `o`   | Open in browser            |
 | `projects`           | `pr`  | List projects              |
+| `boards`             |       | List Jira boards           |
+| `sprint`             |       | View sprints               |
 | `statuses`           | `st`  | List statuses              |
 
 ---

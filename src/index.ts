@@ -15,6 +15,19 @@ import { openCommand } from "./commands/open.js";
 import { projectsCommand } from "./commands/projects.js";
 import { statusesCommand } from "./commands/statuses.js";
 import { statusCommand } from "./commands/status.js";
+import { assignCommand } from "./commands/assign.js";
+import { editCommand } from "./commands/edit.js";
+import { deleteCommand } from "./commands/delete.js";
+import { watchCommand } from "./commands/watch.js";
+import { linkCommand } from "./commands/link.js";
+import { sprintCommand } from "./commands/sprint.js";
+import { searchCommand } from "./commands/search.js";
+import { worklogCommand } from "./commands/worklog.js";
+import { labelsCommand } from "./commands/labels.js";
+import { priorityCommand } from "./commands/priority.js";
+import { attachmentsCommand } from "./commands/attachments.js";
+import { boardsCommand } from "./commands/boards.js";
+import { estimateCommand } from "./commands/estimate.js";
 
 const program = new Command();
 
@@ -35,5 +48,18 @@ openCommand(program);
 projectsCommand(program);
 statusesCommand(program);
 statusCommand(program);
+assignCommand(program);
+editCommand(program);
+deleteCommand(program);
+watchCommand(program);
+linkCommand(program);
+sprintCommand(program);
+searchCommand(program);
+worklogCommand(program);
+labelsCommand(program);
+priorityCommand(program);
+attachmentsCommand(program);
+boardsCommand(program);
+estimateCommand(program);
 
 program.parse();
